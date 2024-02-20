@@ -18,10 +18,65 @@ class _LoginScreenState extends State<LoginScreen> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
-  void login() {
-    // Navigate to the landing screen
-    Navigator.push(context, MaterialPageRoute(builder: (context) => SignUp()));
+  ApiLogin apiLogin = ApiLogin();
+
+Future<void> login() async {
+  try {
+    // Get user input from text controllers
+    String username = emailController.text;
+    String password = passwordController.text;
+
+    // Call the login API endpoint using your instantiated ApiService
+    bool loginSuccess = await ApiLogin.login(username, password);
+
+    // Check if the login was successful
+    if (loginSuccess) {
+      // Show success popup
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Login Successful"),
+            content: Text("You have successfully logged in."),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text("OK"),
+              ),
+            ],
+          );
+        },
+      );
+
+      // Navigate to the landing screen on successful login
+      Navigator.push(context, MaterialPageRoute(builder: (context) => SignUp()));
+    } else {
+      // Show error popup
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Login Failed"),
+            content: Text("Login failed. Please check your credentials."),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text("OK"),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  } catch (error) {
+    // Handle other errors (you may want to log the error or perform additional actions)
+    print('Login failed: $error');
   }
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,10 +135,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(
                   height: 10,
                 ),
-                ButtonGlobal(info: 'Sign In',
-                onPressed: () {
-                  login();
-                },),
+                ButtonGlobal(
+              info: 'Sign in',
+              onPressed: login,
+            ),
                 const SizedBox(
                   height: 10,
                 ),

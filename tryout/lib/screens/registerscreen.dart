@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:tryout/screens/loginscreen.dart';
 import 'package:tryout/utils/global.color.dart';
@@ -29,8 +31,6 @@ class _SignUpState extends State<SignUp> {
       String email = emailController.text;
       String password = passwordController.text;
 
-      // Validate input (add your validation logic)
-
       // Call the signup API endpoint
       await ApiService.signup(name, email, password);
 
@@ -53,17 +53,19 @@ class _SignUpState extends State<SignUp> {
         },
       );
 
-      // Navigate to the map screen on successful signup
+      // Navigate to the login screen on successful signup
       Navigator.push(
-          context, MaterialPageRoute(builder: (context) => LoginScreen()));
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+      );
     } catch (error) {
-      // Show error popup
+      // Show error popup with the specific error message from API
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text("Signup Failed"),
-            content: Text("Signup failed. Please try again."),
+            content: Text("Signup failed. ${getErrorMessages(error)}"),
             actions: [
               TextButton(
                 onPressed: () {
@@ -79,6 +81,26 @@ class _SignUpState extends State<SignUp> {
       // Handle errors (you may want to log the error or perform additional actions)
       print('Signup failed: $error');
     }
+  }
+
+  String getErrorMessages(error) {
+    if (error is Exception) {
+      // Parse and format error messages from API
+      try {
+        Map<String, dynamic> errorData = jsonDecode(error.toString());
+        if (errorData.containsKey('messages')) {
+          Map<String, dynamic> messages = errorData['messages'];
+          String errorMessage = '';
+          messages.forEach((field, fieldErrors) {
+            errorMessage += '$field: ${fieldErrors[0]}\n';
+          });
+          return errorMessage;
+        }
+      } catch (e) {
+        // Handle JSON parsing error
+      }
+    }
+    return 'An unknown error occurred.';
   }
 
   @override
@@ -110,7 +132,7 @@ class _SignUpState extends State<SignUp> {
                   height: 50,
                 ),
                 Text(
-                  "Login to your acoount",
+                  "Login to your account",
                   style: TextStyle(
                     color: GlobalColors.textColor,
                     fontSize: 16,
@@ -129,7 +151,7 @@ class _SignUpState extends State<SignUp> {
                 const SizedBox(
                   height: 10,
                 ),
-                //Email Input
+                // Email Input
                 TextForm(
                   controller: emailController,
                   text: 'Email',
@@ -139,7 +161,7 @@ class _SignUpState extends State<SignUp> {
                 const SizedBox(
                   height: 10,
                 ),
-                //Password Input
+                // Password Input
                 TextForm(
                     controller: passwordController,
                     textInputType: TextInputType.text,
@@ -150,9 +172,7 @@ class _SignUpState extends State<SignUp> {
                 ),
                 ButtonGlobal(
                   info: 'Sign Up',
-                  onPressed: () {
-                    signup();
-                  },
+                  onPressed: signup,
                 ),
                 const SizedBox(
                   height: 10,

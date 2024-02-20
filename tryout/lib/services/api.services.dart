@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart'; // Import Dio package
+import 'dart:convert';
 
 class ApiService {
   static const String baseUrl = 'https://api-test.eksam.cloud/api/v1/auth';
 
-  static Future<void> signup(String name,String email, String password) async {
-    final apiUrl = '$baseUrl/register'; // Replace with your actual API endpoint
+  static Future<void> signup(String name, String email, String password) async {
+    const apiUrl = '$baseUrl/register'; // Ganti dengan API endpoint yang sesuai
 
     try {
       final response = await Dio().post(
@@ -12,23 +13,28 @@ class ApiService {
         data: {"name": name, "email": email, "password": password},
       );
 
-      if (response.statusCode == 200) {
+      if (response.data['status_code'] == 200) {
         print('Signup successful');
       } else {
-        print('Signup failed with status code: ${response.statusCode}');
-        print('Response body: ${response.data}');
+        print('Signup failed with status code: ${response.data['status_code']}');
+        print('Error messages: ${response.data['messages']}');
+        // Tambahkan log atau penanganan kesalahan sesuai kebutuhan Anda
+        throw Exception('Signup failed with status code: ${response.data['status_code']}, Error messages: ${response.data['messages']}');
       }
     } catch (error) {
       print('Error during signup: $error');
+      // Tambahkan log atau penanganan kesalahan sesuai kebutuhan Anda
+      throw Exception('Error during signup: $error');
     }
   }
 }
 
+
 class ApiLogin {
   static const String baseUrl = 'https://api-test.eksam.cloud/api/v1/auth';
 
-  static Future<bool> validateCredentials(String email, String password) async {
-    final apiUrl = '$baseUrl/login'; // Replace with your actual API endpoint for validation
+  static Future<Map<String, dynamic>> validateCredentials(String email, String password) async {
+    const apiUrl = '$baseUrl/login'; // Ganti dengan API endpoint validasi sesuai kebutuhan
 
     try {
       final response = await Dio().post(
@@ -44,30 +50,30 @@ class ApiLogin {
         },
       );
 
-      if (response.statusCode == 200) {
+      if (response.data['status_code'] == 200) {
         print('Credentials are valid');
-        return true;
-      } else if (response.statusCode == 401) {
+        return response.data['data']['user'];
+      } else if (response.data['status_code'] == 401) {
         print('Invalid username or password');
       } else {
-        print('Validation failed with status code: ${response.statusCode}');
+        print('Validation failed with status code: ${response.data['status_code']}');
         print('Response body: ${response.data}');
       }
     } catch (error) {
       print('Error during validation: $error');
     }
 
-    return false;
+    return {};
   }
 
   static Future<bool> login(String email, String password) async {
     try {
       // Validate credentials first
-      bool isValidCredentials = await validateCredentials(email, password);
+      Map<String, dynamic> userData = await validateCredentials(email, password);
 
-      if (isValidCredentials) {
+      if (userData.isNotEmpty) {
         // Continue with the login process
-        final loginUrl = '$baseUrl/login'; // Replace with your actual login API endpoint
+        const loginUrl = '$baseUrl/login'; // Ganti dengan API endpoint login yang sesuai
 
         final response = await Dio().post(
           loginUrl,
@@ -82,19 +88,17 @@ class ApiLogin {
           },
         );
 
-        if (response.statusCode == 200) {
+        if (response.data['status_code'] == 200) {
           // Login berhasil
-          if (response.data['status'] == "Success") {
-            print('Login successful');
-            return true;
-          } else {
-            // Login gagal: Status message tidak sesuai
-            print('Login failed with status message: ${response.data['status']}');
-            print('Response body: ${response.data}');
-          }
+          print('Login successful');
+
+          // Lakukan sesuatu dengan data pengguna yang masuk
+          print('User data: $userData');
+
+          return true;
         } else {
-          // Login gagal: Password salah atau pengguna tidak ditemukan
-          print('Login failed with status code: ${response.statusCode}');
+          // Login gagal
+          print('Login failed with status code: ${response.data['status_code']}');
           print('Response body: ${response.data}');
         }
       } else {

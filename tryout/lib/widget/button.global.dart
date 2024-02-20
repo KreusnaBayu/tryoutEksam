@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:tryout/utils/global.color.dart';
 
 class ButtonGlobal extends StatelessWidget {
-  const ButtonGlobal({super.key, required this.info, required Null Function() onPressed});
+  ButtonGlobal({super.key, required this.info, required this.onPressed,});
   final String info;//signin /signup
+  final VoidCallback onPressed;
+  
+
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: (){
-        print('succes');
-      },
+      onTap: onPressed,
       child: Container(
         alignment:  Alignment.center,
         height: 55,
