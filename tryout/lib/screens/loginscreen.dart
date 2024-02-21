@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tryout/screens/quizscreen.dart';
 import 'package:tryout/screens/registerscreen.dart';
 import 'package:tryout/utils/global.color.dart';
 import '../services/api.services.dart';
@@ -51,7 +52,7 @@ Future<void> login() async {
       );
 
       // Navigate to the landing screen on successful login
-      Navigator.push(context, MaterialPageRoute(builder: (context) => SignUp()));
+      Navigator.push(context, MaterialPageRoute(builder: (context) => QuizPage()));
     } else {
       // Show error popup
       showDialog(
