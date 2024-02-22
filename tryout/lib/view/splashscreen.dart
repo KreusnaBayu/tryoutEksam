@@ -12,16 +12,15 @@ class Splash extends StatelessWidget {
     Timer(const Duration(seconds: 2), () {
       Get.to(const LoginScreen());
     });
+
     return Scaffold(
       backgroundColor: GlobalColors.mainColor,
-      body: const Center(
-        child: Text(
-          "Logo",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 30,
-            fontWeight: FontWeight.bold,
-          ),),
+      body: Center(
+        child: Image.asset(
+          'assets/images/logo1.png', // Replace with the actual path to your image
+          width: 150, // Adjust the width as needed
+          height: 150, // Adjust the height as needed
+        ),
       ),
     );
   }

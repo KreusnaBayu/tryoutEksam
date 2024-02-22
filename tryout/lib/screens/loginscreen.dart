@@ -20,63 +20,64 @@ class _LoginScreenState extends State<LoginScreen> {
 
   ApiLogin apiLogin = ApiLogin();
 
-Future<void> login() async {
-  try {
-    // Get user input from text controllers
-    String username = emailController.text;
-    String password = passwordController.text;
+  Future<void> login() async {
+    try {
+      // Get user input from text controllers
+      String username = emailController.text;
+      String password = passwordController.text;
 
-    // Call the login API endpoint using your instantiated ApiService
-    bool loginSuccess = await ApiLogin.login(username, password);
+      // Call the login API endpoint using your instantiated ApiService
+      bool loginSuccess = await ApiLogin.login(username, password);
 
-    // Check if the login was successful
-    if (loginSuccess) {
-      // Show success popup
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Login Successful"),
-            content: Text("You have successfully logged in."),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text("OK"),
-              ),
-            ],
-          );
-        },
-      );
+      // Check if the login was successful
+      if (loginSuccess) {
+        // Show success popup
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Login Successful"),
+              content: Text("You have successfully logged in."),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text("OK"),
+                ),
+              ],
+            );
+          },
+        );
 
-      // Navigate to the landing screen on successful login
-      Navigator.push(context, MaterialPageRoute(builder: (context) => QuizPage()));
-    } else {
-      // Show error popup
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Login Failed"),
-            content: Text("Login failed. Please check your credentials."),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text("OK"),
-              ),
-            ],
-          );
-        },
-      );
+        // Navigate to the landing screen on successful login
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => QuizPage()));
+      } else {
+        // Show error popup
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Login Failed"),
+              content: Text("Login failed. Please check your credentials."),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text("OK"),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } catch (error) {
+      // Handle other errors (you may want to log the error or perform additional actions)
+      print('Login failed: $error');
     }
-  } catch (error) {
-    // Handle other errors (you may want to log the error or perform additional actions)
-    print('Login failed: $error');
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -94,13 +95,10 @@ Future<void> login() async {
                 ),
                 Container(
                   alignment: Alignment.center,
-                  child: Text(
-                    "Logo",
-                    style: TextStyle(
-                      color: GlobalColors.mainColor,
-                      fontSize: 35,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Image.asset(
+                    'assets/images/logo2.png', // Replace with the actual path to your image
+                    width: 150, // Adjust the width as needed
+                    height: 150, // Adjust the height as needed
                   ),
                 ),
                 const SizedBox(
@@ -137,13 +135,15 @@ Future<void> login() async {
                   height: 10,
                 ),
                 ButtonGlobal(
-              info: 'Sign in',
-              onPressed: login,
-            ),
+                  info: 'Sign in',
+                  onPressed: login,
+                ),
                 const SizedBox(
                   height: 10,
                 ),
-                SocialLogin(Sign: '-Or sign in with',),
+                SocialLogin(
+                  Sign: '-Or sign in with',
+                ),
               ],
             ),
           ),

@@ -118,13 +118,10 @@ class _SignUpState extends State<SignUp> {
                 ),
                 Container(
                   alignment: Alignment.center,
-                  child: Text(
-                    "Logo",
-                    style: TextStyle(
-                      color: GlobalColors.mainColor,
-                      fontSize: 35,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Image.asset(
+                    'assets/images/logo2.png', // Replace with the actual path to your image
+                    width: 150, // Adjust the width as needed
+                    height: 150, // Adjust the height as needed
                   ),
                 ),
                 const SizedBox(
