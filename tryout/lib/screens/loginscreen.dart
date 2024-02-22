@@ -3,7 +3,6 @@ import 'package:tryout/screens/quizscreen.dart';
 import 'package:tryout/screens/registerscreen.dart';
 import 'package:tryout/utils/global.color.dart';
 import '../services/api.services.dart';
-
 import '../widget/button.global.dart';
 import '../widget/social.login.dart';
 import '../widget/text.form.dart';
@@ -78,6 +77,7 @@ Future<void> login() async {
     print('Login failed: $error');
   }
 }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

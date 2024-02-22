@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:tryout/screens/loginscreen.dart';
 import 'package:tryout/utils/global.color.dart';

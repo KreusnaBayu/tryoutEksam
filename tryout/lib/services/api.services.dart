@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart'; // Import Dio package
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class ApiService {
@@ -32,9 +33,10 @@ class ApiService {
 
 class ApiLogin {
   static const String baseUrl = 'https://api-test.eksam.cloud/api/v1/auth';
+  static String? authToken;  // Simpan token di sini
 
   static Future<Map<String, dynamic>> validateCredentials(String email, String password) async {
-    const apiUrl = '$baseUrl/login'; // Ganti dengan API endpoint validasi sesuai kebutuhan
+    const apiUrl = '$baseUrl/login';
 
     try {
       final response = await Dio().post(
@@ -52,6 +54,12 @@ class ApiLogin {
 
       if (response.data['status_code'] == 200) {
         print('Credentials are valid');
+        authToken = response.data['data']['access_token'];  // Simpan token setelah login
+
+        // Menyimpan token di SharedPreferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setString('authToken', authToken!);
+
         return response.data['data']['user'];
       } else if (response.data['status_code'] == 401) {
         print('Invalid username or password');
@@ -68,12 +76,10 @@ class ApiLogin {
 
   static Future<bool> login(String email, String password) async {
     try {
-      // Validate credentials first
       Map<String, dynamic> userData = await validateCredentials(email, password);
 
       if (userData.isNotEmpty) {
-        // Continue with the login process
-        const loginUrl = '$baseUrl/login'; // Ganti dengan API endpoint login yang sesuai
+        String loginUrl = '$baseUrl/login'; // Remove 'const' from loginUrl
 
         final response = await Dio().post(
           loginUrl,
@@ -89,27 +95,24 @@ class ApiLogin {
         );
 
         if (response.data['status_code'] == 200) {
-          // Login berhasil
-          print('Login successful');
 
-          // Lakukan sesuatu dengan data pengguna yang masuk
           print('User data: $userData');
-
           return true;
         } else {
-          // Login gagal
           print('Login failed with status code: ${response.data['status_code']}');
           print('Response body: ${response.data}');
         }
       } else {
-        // Login gagal: Kredensial tidak valid
         print('Login failed: Invalid credentials');
       }
     } catch (error) {
-      // Tangani kesalahan selama login
       print('Error during login: $error');
     }
 
     return false;
+  }
+
+  static String? getAuthToken() {
+    return authToken;
   }
 }

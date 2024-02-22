@@ -1,65 +1,57 @@
-// api_soal.dart
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:tryout/utils/option.dart';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:tryout/model/question_model.dart';
+import 'package:tryout/services/api.services.dart';
 
 class ApiSoal {
-  static Future<List<Map<String, dynamic>>> fetchQuestions() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://api-test.eksam.cloud/api/v1/tryout/question'),
-      );
+  final String host = 'https://api-test.eksam.cloud';
+  
+  Future<Question> fetchQuestion(int questionId) async {
+    String? authToken = ApiLogin.getAuthToken();
 
-      if (response.statusCode == 200) {
-        final List<dynamic> questionsData = json.decode(response.body);
-
-        // Memastikan respons berupa List<Map<String, dynamic>>
-        if (questionsData is List &&
-            questionsData.isNotEmpty &&
-            questionsData[0] is Map<String, dynamic>) {
-          return List<Map<String, dynamic>>.from(questionsData);
-        } else {
-          throw Exception('Invalid data format in API response');
-        }
-      } else {
-        throw Exception('Failed to load questions: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to connect to the server. Please check your internet connection.');
+    if (kDebugMode) {
+      print(authToken);
+      print('$host/api/v1/tryout/question/$questionId');
     }
-  }
 
-   static Future<List<Option>> fetchQuestionOptions(int tryoutQuestionId) async {
-  try {
-    final response = await http.get(
-      Uri.parse('https://api-test.eksam.cloud/api/v1/tryout/question-option'),
-    );
+      if (authToken != null) {
+      try {
+        final response = await Dio().get(
+          '$host/api/v1/tryout/question/$questionId',
+          options: Options(
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $authToken",
+            },
+          ),
+        );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> optionsData = json.decode(response.body);
+        if (response.statusCode == 200) {
+          final responseData = response.data['data'];
+          final question = Question.fromJson({
+            'id': int.parse(responseData['id'].toString()),
+            'no_soal': responseData['no_soal'],
+            'soal': responseData['soal'],
+            'tryout_question_option': responseData['tryout_question_option'],
+          });
 
-      // Memastikan respons berupa List<Map<String, dynamic>>
-      if (optionsData is List &&
-          optionsData.isNotEmpty &&
-          optionsData[0] is Map<String, dynamic>) {
-        final List<Option> options = optionsData.map((data) => Option(
-          id: data['id'],
-          inisial: data['inisial'],
-          jawaban: data['jawaban'],
-          isCorrect: data['iscorrect'] == '1',
-          nilai: int.parse(data['nilai']),
-          tryoutQuestionId: tryoutQuestionId,  // Menyertakan tryoutQuestionId
-        )).toList();
-
-        return options;
-      } else {
-        throw Exception('Invalid data format in API response');
+          return question;
+        } else {
+          // Handle unsuccessful response (e.g., print error message)
+          print('Failed to load question with status code: ${response.statusCode}');
+          print('Response Body: ${response.data}');
+          throw Exception('Failed to load question');
+        }
+      } catch (error) {
+        // Handle other types of errors (e.g., network error)
+        print('Error fetching question: $error');
+        throw Exception('Failed to load question');
       }
     } else {
-      throw Exception('Failed to load question options: ${response.statusCode}');
+      // Handle case where authToken is null
+      print('AuthToken is null. User may not be authenticated.');
+      throw Exception('Failed to load question');
     }
-  } catch (e) {
-    throw Exception('Failed to connect to the server. Please check your internet connection.');
   }
-}
 }

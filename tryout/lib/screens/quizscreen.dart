@@ -1,5 +1,10 @@
+// lib/screens/quizscreen.dart
 import 'package:flutter/material.dart';
 import 'package:tryout/controller/quiz_controller.dart';
+import 'package:tryout/model/question_model.dart';
+import 'package:tryout/screens/score.screen.dart';
+import 'package:tryout/utils/global.color.dart';
+import 'package:tryout/widget/buttom_sheet.dart';
 import 'package:tryout/widget/quiz_widget.dart';
 
 class QuizPage extends StatefulWidget {
@@ -8,124 +13,164 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
-  final QuizController _quizController = QuizController();
-  late Future<void> _fetchQuestionsFuture;
+  late Future<Question> futureQuestion;
+  final QuizController controller = QuizController();
+  
+  Answer? get option => null;
 
   @override
   void initState() {
     super.initState();
-    _fetchQuestionsFuture = _quizController.fetchQuestions();
+    futureQuestion = controller.getCurrentQuestion();
+  
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
+  void _showReportBottomSheet() {
+    FocusScope.of(context).unfocus();
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return ReportBottomSheet();
+      },
+    );
+  }
+
+  void _finishQuiz() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Finish Quiz',
+            style: TextStyle(color:  Colors.black),
+          ),
+          content: Text(
+            'Are you sure you want to finish the quiz?',
+            style: TextStyle(color: Colors.black),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                // Finish the quiz and display the total score
+                int totalScore = controller.calculateTotalScore();
+                Navigator.of(context).pop();
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ResultsPage(totalScore: totalScore, controller: controller)));
+              },
+              child: Text(
+                'Finish',
+                style: TextStyle(color: Colors.green),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: SafeArea(
+      child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: ElevatedButton.icon(
+                  onPressed: _showReportBottomSheet,
+                  icon: Icon(Icons.report, color: Colors.red),
+                  label: Text('Report', style: TextStyle(color: Colors.red)),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              // Tambahkan LinearProgressIndicator di sini
+              LinearProgressIndicator(
+                value: controller.currentQuestionId / 5, // Sesuaikan dengan jumlah total pertanyaan
+                color: GlobalColors.mainColor,
+              ),
+              SizedBox(height: 16.0),
+              Card(
+                elevation: 4.0,
+                margin: EdgeInsets.all(8.0),
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: FutureBuilder<Question>(
+                    future: futureQuestion,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return CircularProgressIndicator();
+                      } else if (snapshot.hasError) {
+                        print(snapshot.error);
+                        print(snapshot.stackTrace);
+                        return Text('Error: ${snapshot.error}');
+                      } else if (!snapshot.hasData) {
+                        return Text('No data available');
+                      }
+
+                      return QuestionWidget(
+                        questionText: snapshot.data!.soal,
+                        options: snapshot.data!.options,
+                        quizController: controller,
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  // Implement report functionality
-                },
-                icon: Icon(Icons.report),
-                label: Text('Report'),
+            ElevatedButton.icon(
+              onPressed: () async {
+                Question previousQuestion = await controller.getPreviousQuestion();
+                setState(() {
+                  controller.setCurrentQuestionId(previousQuestion.id!);
+                  futureQuestion = controller.getCurrentQuestion();
+                  QuizController.currentAnswer = option;
+                });
+              },
+              icon: Icon(Icons.arrow_back, color: GlobalColors.mainColor),
+              label: Text('', style: TextStyle(color: GlobalColors.mainColor)),
+              style: ElevatedButton.styleFrom(
+                primary: controller.currentQuestionId == 1 ? Colors.grey : null,
               ),
             ),
-            SizedBox(height: 16.0),
-            Card(
-              elevation: 4.0,
-              margin: EdgeInsets.all(8.0),
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Question ${_quizController.currentIndex}',
-                      style: TextStyle(
-                        fontSize: 18.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 12.0),
-                    FutureBuilder<void>(
-                      future: _fetchQuestionsFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Text('Loading question...');
-                        } else if (snapshot.hasError) {
-                          return Text('Error loading question: ${snapshot.error}');
-                        } else {
-                          return _quizController.getCurrentQuestion() != null
-                              ? QuestionWidget(
-                                  question: _quizController.getCurrentQuestion(),
-                                )
-                              : Text('No question available');
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
+            ElevatedButton.icon(
+              onPressed: _finishQuiz,
+              icon: Icon(Icons.check, color: GlobalColors.mainColor),
+              label: Text('Finish', style: TextStyle(color: GlobalColors.mainColor)),
             ),
-            SizedBox(height: 16.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _quizController.previousQuestion();
-                    });
-                  },
-                  icon: Icon(Icons.arrow_back),
-                  label: Text('Previous'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // Implement finish quiz functionality
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text('Finish Quiz'),
-                          content: Text('Are you sure you want to finish the quiz?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                // Implement logic for finishing the quiz
-                                Navigator.of(context).pop();
-                              },
-                              child: Text('Finish'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  icon: Icon(Icons.check),
-                  label: Text('Finish'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _quizController.nextQuestion();
-                    });
-                  },
-                  icon: Icon(Icons.arrow_forward),
-                  label: Text('Next'),
-                ),
-              ],
+            ElevatedButton.icon(
+              onPressed: () async {
+                Question nextQuestion = await controller.getNextQuestion();
+                setState(() {
+                  controller.setCurrentQuestionId(nextQuestion.id!);
+                  futureQuestion = controller.getCurrentQuestion();
+                });
+              },
+              icon: Icon(Icons.arrow_forward, color: GlobalColors.mainColor),
+              label: Text('', style: TextStyle(color: GlobalColors.mainColor)),
+              style: ElevatedButton.styleFrom(
+                primary: controller.currentQuestionId == 5 ? Colors.grey : null,
+              ),
             ),
           ],
         ),

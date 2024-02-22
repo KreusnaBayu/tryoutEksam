@@ -1,11 +1,25 @@
 // quiz_widget.dart
 import 'package:flutter/material.dart';
-import 'package:tryout/utils/question.dart';
+import 'package:tryout/controller/quiz_controller.dart';
+import 'package:tryout/model/question_model.dart';
 
-class QuestionWidget extends StatelessWidget {
-  final Question question;
+class QuestionWidget extends StatefulWidget {
+  final String questionText;
+  final List<Answer> options;
+  final QuizController quizController;
 
-  QuestionWidget({required this.question});
+  QuestionWidget({
+    required this.questionText,
+    required this.options,
+    required this.quizController,
+  });
+
+  @override
+  State<QuestionWidget> createState() => _QuestionWidgetState();
+}
+
+class _QuestionWidgetState extends State<QuestionWidget> {
+  Answer? current;
 
   @override
   Widget build(BuildContext context) {
@@ -13,27 +27,32 @@ class QuestionWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          question.questionText,
+          widget.questionText,
           style: TextStyle(fontSize: 16.0),
         ),
-        // Menampilkan opsi dari question.options
-        for (var option in question.options)
-          ListTile(
-            title: Text(option.jawaban),
-            // Menggunakan properti isCorrect untuk menentukan tindakan atau penanganan yang sesuai
-            // Misalnya, memberikan warna berbeda untuk opsi yang benar atau salah
-            // Sesuaikan logika sesuai kebutuhan
-            tileColor: option.isCorrect ? Colors.green : null,
-            onTap: () {
-              // Logika yang ingin Anda lakukan ketika pengguna memilih opsi ini
-              // Contoh: menampilkan pesan bahwa jawaban benar atau salah
-              if (option.isCorrect) {
-                print('Jawaban benar!');
-              } else {
-                print('Jawaban salah.');
-              }
-            },
-          ),
+        SizedBox(height: 12.0),
+        // Display options using the 'options' list
+        Column(
+          children: widget.options.map((option) {
+            return RadioListTile(
+              title: Text(
+                option.jawaban,
+                style: TextStyle(
+                  color: Colors.black,
+                  // Add other style properties as needed
+                ),
+              ),
+              value: option,
+              groupValue: current,
+              onChanged: (value) {
+                setState(() {
+                  current = option;
+                  widget.quizController.handleAnswer(option);
+                });
+              },
+            );
+          }).toList(),
+        ),
       ],
     );
   }
